@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Word Game!</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+  </head>
+  <body>
+    <div class="body" id="loginDiv">
+      <h1>Lobby Maker!</h1>
+      <p> <input id=nameInput type="text" placeholder="NAME"/> *
+      </br>
+      </br>
+      <input id=roomCodeInput type="text" placeholder="ROOM CODE"/>
+      <input id=joinRoomButton type="button" value="Join Room"/>
+ </p>
+
+
+      <p> or <input type="button" value="Create New Lobby"/> </p>
+    </div>
+    <div class="body" id="lobbyDiv">
+      <h1>Lobby Name</h1>
+      <table id="lobbyTable">
+        <tr>
+          <th> Name </th>
+        </tr>
+        <tr>
+          <td> User1 </td>
+        </tr>
+        <tr>
+          <td> User1 </td>
+        </tr>
+      </table>
+
+      <table id="hostLobbyTable">
+        <tr>
+          <th> Name </th>
+        </tr>
+        <tr>
+          <td> User1 </td>
+          <td> <button>Make Host</button> <td>
+        </tr>
+        <tr>
+          <td> User1 </td>
+          <td> <button>Make Host</button> <td>
+        </tr>
+      </table>
+    </div>
+
+      <script src="/app.js"></script>
+  </body>
+</html>
