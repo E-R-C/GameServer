@@ -7,11 +7,13 @@ $(document).ready(function(){
     var name = $("#nameInput").val();
     var room = $("#roomCodeInput").val();
     var game = $("select#gameSelector option:selected").val();
+    var maxPeople = 4; // Todo: create an input for this
+    var isHost = true;
     // visit one of the game routes in express
-    var data = {name: name, room: room, game: game};
+    var data = {isHost:isHost, name: name, room: room, game: game};
     $.ajax({
       type: 'POST',
-      url: game,
+      url: "/",
       contentType: 'application/json',
       data: JSON.stringify(data),
       dataType: 'json',
@@ -21,4 +23,3 @@ $(document).ready(function(){
     });
   });
 });
-
