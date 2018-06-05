@@ -3,6 +3,11 @@
   <head>
     <meta charset="utf-8">
     <title>Word Game!</title>
+    <script
+            src="https://code.jquery.com/jquery-2.2.4.min.js"
+            integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+            crossorigin="anonymous">
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
   </head>
   <body>
@@ -47,6 +52,16 @@
       </table>
     </div>
 
-      <script src="/app.js"></script>
+    <div class="body" id="gameType">
+      <h1>Game Type</h1>
+      <select name="game" id="gameSelector">
+        <option value="tictactoe">Tic-Tac-Toe</option>
+        <option value="connect4" selected >Connect 4</option>
+      </select>
+      <button id="submitGame">Submit</button>
+    </div>
+
+      <!--<script src="/app.js"></script>-->
+      <script src="script.js"></script>
   </body>
 </html>
