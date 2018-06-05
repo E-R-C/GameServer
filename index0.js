@@ -2,7 +2,7 @@ var express = require('express');
 var socket = require('socket.io');
 var path = require('path');
 var bodyParser = require('body-parser');
-
+var session = require('express-session');
 // App setup
 var app = express();
 var server = app.listen(8001, function(){
@@ -16,6 +16,14 @@ app.use(express.static('public'));
 // Needed to get body data from req coming in
 app.use(bodyParser.json());
 
+// cookie setup
+app.use(session({
+  secret: "TEMPORARY SECRET STRING",
+  cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, secure: false },
+  resave: false,
+  saveUninitialized: false,
+}))
+
 // Socket setup
 var io = socket(server);
 
@@ -26,21 +34,32 @@ app.post('/', function(req, res){
   var roomCode;
   if (host) {
     console.log("Hosting a game");
-    roomCode = createRoom(roomList, cont.gameType, cont.name, cont.maxPlayers)
+    roomCode = createRoom(roomList, cont.game, cont.name, cont.maxPlayers)
   } else { // Joining a game
     console.log("Joining a game");
     roomCode = cont.roomCode;
   }
+  console.log(getRoom(roomList, roomCode));
   if (canJoin(roomList, roomCode, cont.name)){
-    joinRoom(roomCode, cont.name);
+    console.log("Joining " + roomCode);
+    req.session.roomCode = roomCode;
+    req.session.userName = cont.name;
+    res.send(req.protocol + "://" + req.headers.host + req.originalUrl + roomCode);
+    // joinRoom(roomCode, cont.name, res);
   } else {
     // Tell the user wrong userid or room code
-
+    console.log("unable to join " + roomCode);
   }
 });
-app.get('/:roomCode', function(err, res) {
-  roomCode = res.params.roomCode;
 
+app.get('/:roomCode', function(req, res) {
+  var roomCode = req.params.roomCode;
+  var name = req.session.userName;
+  var roomObj = getRoom(roomList, roomCode);
+  // TODO: serve back the html document here for a game
+
+  res.write(name);
+  res.end();
 });
 
 function existingRoomCode(roomList, newCode){
@@ -66,7 +85,7 @@ function createRoom(roomList, gameType, hostname, maxPlayers){
   while(!safeRoomCode) {
     roomCode = generateRandomCode(5);
     var query = {roomCode :roomCode};
-    if (validNewRoomCode(roomList, newCode)){
+    if (validNewRoomCode(roomList, roomCode)){
       safeRoomCode = true;
     }
   }
@@ -75,7 +94,7 @@ function createRoom(roomList, gameType, hostname, maxPlayers){
     players:[],
     gameType:gameType,
     host:hostname,
-    maxPlayers:maxPlayers,
+    maxPlayers:parseInt(maxPlayers),
   };
   roomList.push(room);
   return roomCode;
@@ -86,7 +105,8 @@ function validNewRoomCode(roomList, newCode){
 }
 
 function getRoom(roomList, code){
-  for(room in roomList){
+  for(r in roomList){
+    room = roomList[r];
     if (room.roomCode === code){
       return room;
     }
@@ -106,10 +126,15 @@ function canJoin(roomList, roomCode, name){
   } else {
     return false;
   }
-  return true;
+  if (room.players.length < room.maxPlayers){
+    return true;
+  }
+  return false;
 }
-function joinRoom(roomCode, name){
+function joinRoom(roomCode, name, res){
   // we'll need to set a cookie here.
   // cookie should contain: name
-
+  // res.send(path.join(__dirname, roomCode));
+  res.send("WOOOOOOOO");
+  console.log("trying to join");
 }

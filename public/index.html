@@ -8,58 +8,38 @@
             integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
             crossorigin="anonymous">
     </script>
+    <link rel="stylesheet" href="styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
   </head>
   <body>
-    <div class="body" id="loginDiv">
       <h1>Lobby Maker!</h1>
-      <p> <input id=nameInput type="text" placeholder="NAME"/> *
-      </br>
-      </br>
-      <input id=roomCodeInput type="text" placeholder="ROOM CODE"/>
-      <input id=joinRoomButton type="button" value="Join Room"/>
- </p>
-
-
-      <p> or <input type="button" value="Create New Lobby"/> </p>
+      <div id="hostJoinPrompt">
+        <button id="hostGameButton"> Host Game </button>
+        <button id="joinButton"> Join </button>
+      </div>
+      <div class="body hidden" id="hostInfoDiv">
+        <p>
+          <input id=nameInput type="text" placeholder="NAME"/>
+          <input id=numPeople type="number" placeholder="Max People in the room"/>
+          </br>
+          </br>
+          <select name="game" id="gameSelector">
+            <option value="tictactoe">Tic-Tac-Toe</option>
+            <option value="connect4" selected >Connect 4</option>
+          </select>
+          <button id="createRoomButton"> Create Room </button>
+       </p>
     </div>
-    <div class="body" id="lobbyDiv">
-      <h1>Lobby Name</h1>
-      <table id="lobbyTable">
-        <tr>
-          <th> Name </th>
-        </tr>
-        <tr>
-          <td> User1 </td>
-        </tr>
-        <tr>
-          <td> User1 </td>
-        </tr>
-      </table>
+    <div class="body hidden" id="joinInfoDiv">
+      <p>
+        <input id=joinNameInput type="text" placeholder="NAME"/>
+      </br> </br>
+        <input id=roomCodeInput type="text" placeholder="ROOM CODE">
+        <button id=joinRoomButton>Join Room</button>
 
-      <table id="hostLobbyTable">
-        <tr>
-          <th> Name </th>
-        </tr>
-        <tr>
-          <td> User1 </td>
-          <td> <button>Make Host</button> <td>
-        </tr>
-        <tr>
-          <td> User1 </td>
-          <td> <button>Make Host</button> <td>
-        </tr>
-      </table>
+      </p>
     </div>
 
-    <div class="body" id="gameType">
-      <h1>Game Type</h1>
-      <select name="game" id="gameSelector">
-        <option value="tictactoe">Tic-Tac-Toe</option>
-        <option value="connect4" selected >Connect 4</option>
-      </select>
-      <button id="submitGame">Submit</button>
-    </div>
 
       <!--<script src="/app.js"></script>-->
       <script src="script.js"></script>
