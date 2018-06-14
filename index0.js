@@ -3,11 +3,14 @@ var socket = require('socket.io');
 var path = require('path');
 var bodyParser = require('body-parser');
 var session = require('express-session');
+var ejs = require('ejs');
 // App setup
 var app = express();
 var server = app.listen(8001, function(){
   console.log('listening to requests on 8001');
 });
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 var roomList = []
 
 // Static Files
@@ -22,7 +25,7 @@ app.use(session({
   cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, secure: false },
   resave: false,
   saveUninitialized: false,
-}))
+}));
 
 // Socket setup
 var io = socket(server);
@@ -57,10 +60,27 @@ app.get('/:roomCode', function(req, res) {
   var name = req.session.userName;
   var roomObj = getRoom(roomList, roomCode);
   // TODO: serve back the html document here for a game
+  if (roomObj){
+    if (roomObj.gameType === "tictactoe"){
+      // TODO: serve back tictactoe
+      res.render('tictactoe.ejs', {
+        title: "Tic Tac Toe!",
+        roomCode: roomObj.roomCode,
+        gameType: "Tic-Tac-Toe",
+      });
 
-  res.write(name);
+    } else if (roomObj.gameType === "connect4"){
+      // TODO: serve connect4
+    }
+    res.write(name + " " + roomCode);
+  }
+  else {
+    res.write("Room Doesn't exist!");
+  }
   res.end();
 });
+
+
 
 function existingRoomCode(roomList, newCode){
   return getRoom(roomList, newCode);
@@ -89,13 +109,21 @@ function createRoom(roomList, gameType, hostname, maxPlayers){
       safeRoomCode = true;
     }
   }
+  var nsp = io.of('/' + roomCode);
+  console.log('/' + roomCode);
   var room = {
     roomCode:roomCode,
     players:[],
     gameType:gameType,
     host:hostname,
     maxPlayers:parseInt(maxPlayers),
+    socketNamespace: nsp,
   };
+  nsp.on('connection', function(socket){
+    console.log('SOCKET: someone connected to room ' + roomCode);
+    
+    socket.on('disconnect', function(){});
+  });
   roomList.push(room);
   return roomCode;
 }
