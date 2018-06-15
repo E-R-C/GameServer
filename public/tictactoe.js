@@ -9,6 +9,9 @@ window.onload = function(){
 var url = "http://localhost:8001/" + $(".roomCode").text();
 console.log(url);
 var socket = io(url, {transports: ['websocket']});
+socket.emit("init", {
+  name: $("#name").text(),
+})
 
 function updateBoard(twoDArr){
   var table = document.getElementById("tttBoard").rows;

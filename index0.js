@@ -129,8 +129,8 @@ function createRoom(roomList, gameType, hostname, maxPlayers, numTeams){
 
   /* ROOM DECLARATION IS HERE */
   var room = {
+    unassignedNames: [],
     roomCode:roomCode,
-    players:[],
     gameType:gameType,
     host:hostname,
     maxPlayers:parseInt(maxPlayers),
@@ -155,18 +155,22 @@ function createRoom(roomList, gameType, hostname, maxPlayers, numTeams){
     //   gameState: room.gameState,
     //   nameList: room.memberTeamList,
     // });
+    socket.on("init", function(data){
+      room.unassignedNames.push(data.name);
+      console.log(room.unassignedNames);
+    });
     socket.on("teamSelect", function(data){
       var teamIndex = data.teamIndex;
       var name = data.name;
       // Keeps the room socket teams and the names up to date.
-      // TODO, ensure unique names.
-      room.socketList[teamIndex].push(socket);
-      room.memberTeamList[teamIndex].push(name);
-      console.log(room.memberTeamList);
-      io.of(namespace).emit("gameState", {
-        gameState: room.gameState,
-        memberTeamList: room.memberTeamList,
-      });
+      // if the player is not found in a room,
+      if (findPlayersTeam(room, name) === -1){
+        room.socketList[teamIndex].push(socket);
+        room.memberTeamList[teamIndex].push(name);
+        console.log(room.memberTeamList);
+      }
+
+      sendGameState(room, namespace);
     })
     // Assuming we can reuse the socket without forcing refreshes, we will have
     // multiple gamemoves here
@@ -185,10 +189,8 @@ function createRoom(roomList, gameType, hostname, maxPlayers, numTeams){
         room.currentTurn %= room.memberTeamList.length;
       }
       console.log("recieved game move");
-      io.of(namespace).emit("gameState", {
-        gameState: room.gameState,
-        memberTeamList: room.memberTeamList,
-      });
+      sendGameState(room, namespace);
+
     })
 
     // Removes disconnected people from teams, should we think about rejoining?
@@ -204,6 +206,7 @@ function createRoom(roomList, gameType, hostname, maxPlayers, numTeams){
           break;
         }
       }
+      sendGameState(room, namespace);
       if (! found){
         console.log("a user who could not be found on any team just disconnected");
       }
@@ -212,8 +215,11 @@ function createRoom(roomList, gameType, hostname, maxPlayers, numTeams){
   roomList.push(room);
   return roomCode;
 }
-function addUser(room, socket, name, teamIndex){
-
+function sendGameState(room, namespace){
+  io.of(namespace).emit("gameState",{
+    gameState: room.gameState,
+    memberTeamList: room.memberTeamList,
+  });
 }
 function shalClone(obj){
   return Object.assign({}, obj);
@@ -240,19 +246,22 @@ function getRoom(roomList, code){
 }
 
 // Someone can only join if they have a unique name and an existing room.
+// I should be able to return more info here as to why they can't join
 function canJoin(roomList, roomCode, name){
   room = getRoom(roomList, roomCode);
   if (room){
-    for(p in room.players){
-      if (p === name){
-        return false;
-      }
-    }
+    // if they're found in a room, don't let them in
+    return findPlayersTeam(room, name) === -1 && room.unassignedNames.indexOf(name) === -1;
   } else {
     return false;
   }
-  if (room.players.length < room.maxPlayers){
-    return true;
+}
+function findPlayersTeam(room, name){
+  for(i = 0; i < room.memberTeamList.length; i++){
+    var list = room.memberTeamList[i];
+    if (list.indexOf(name) === 1){
+      return i;
+    }
   }
-  return false;
+  return -1;
 }
