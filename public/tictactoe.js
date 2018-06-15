@@ -8,22 +8,38 @@ window.onload = function(){
 };
 var url = "http://localhost:8001/" + $(".roomCode").text();
 console.log(url);
-var socket = io(url);
+var socket = io(url, {transports: ['websocket']});
 
 function updateBoard(twoDArr){
   var table = document.getElementById("tttBoard").rows;
   for (var r = 0; r < 3; r++) {
    for (var c = 0; c < 3; c++) {
      var row = table[r];
-     console.log(row);
      row.cells[c].firstChild.innerHTML = twoDArr[r][c];
      }
   }
 }
 
+function showPeople(listOfPeople){
+  var Xs = listOfPeople[0];
+  var Os = listOfPeople[1];
+  var xRoot = $("#teamXMembers");
+  var oRoot = $("#teamOMembers");
+  clearAndAddToUl(xRoot, Xs);
+  clearAndAddToUl(oRoot, Os);
+}
+
+function clearAndAddToUl(ul, list){
+  ul.empty();
+  for(i = 0; i < list.length; i++){
+    $("<li>" + list[i] + "</li>").appendTo(ul);
+  }
+}
+
+
 socket.on("gameState", function(room){
   updateBoard(room.gameState);
-  console.log(room);
+  showPeople(room.memberTeamList);
 });
 
 
@@ -35,15 +51,16 @@ setTimeout(function(){
   }
 }, 1000);
 
+
 $("#Team0").click(function(){
-  socket.emit('TeamSelect', {
+  socket.emit('teamSelect', {
     name: $("#name").text(),
     teamIndex: 0,
   })
 });
 
 $("#Team1").click(function(){
-  socket.emit('TeamSelect', {
+  socket.emit('teamSelect', {
     name: $("#name").text(),
     teamIndex: 1,
   })
@@ -58,6 +75,6 @@ $('td').click(function() {
     socket.emit("tttgameMove", {
       row: myRow,
       col: myCol,
-      name: $("#name"),
+      name: $("#name").text(),
     })
 });

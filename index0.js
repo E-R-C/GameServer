@@ -29,6 +29,7 @@ app.use(session({
 
 // Socket setup
 var io = socket(server);
+io.set('transports', ['websocket']);
 
 var gameSettings = {
   tictactoe: {
@@ -145,20 +146,53 @@ function createRoom(roomList, gameType, hostname, maxPlayers, numTeams){
   nsp.on('connection', function(socket){
     console.log('SOCKET: someone connected to room ' + roomCode);
     // Prompt
-    socket.emit("gameState", {gameState: room.gameState});
+    var namespace = "/" + roomCode;
+    io.of(namespace).emit("gameState", {
+      gameState: room.gameState,
+      memberTeamList: room.memberTeamList,
+    });
+    // socket.emit("gameState", {
+    //   gameState: room.gameState,
+    //   nameList: room.memberTeamList,
+    // });
+    socket.on("teamSelect", function(data){
+      var teamIndex = data.teamIndex;
+      var name = data.name;
+      // Keeps the room socket teams and the names up to date.
+      // TODO, ensure unique names.
+      room.socketList[teamIndex].push(socket);
+      room.memberTeamList[teamIndex].push(name);
+      console.log(room.memberTeamList);
+      io.of(namespace).emit("gameState", {
+        gameState: room.gameState,
+        memberTeamList: room.memberTeamList,
+      });
+    })
+    // Assuming we can reuse the socket without forcing refreshes, we will have
+    // multiple gamemoves here
+    // I am preceding all tic tac toe moves with "ttt"
     socket.on("tttgameMove", function(data){
-      if (room.currentTurn % 2 === 0){
-        room.gameState[data["row"]][data["col"]] = "X";
-      } else {
-        room.gameState[data["row"]][data["col"]] = "O";
+      console.log(data);
+      console.log("On team " + room.currentTurn + "'s turn, move came from " + JSON.stringify(data.name));
+      if( room.memberTeamList[room.currentTurn].indexOf(data.name) != -1 && room.gameState[data["row"]][data["col"]] === ' '){
+
+        if (room.currentTurn % 2 === 0){
+          room.gameState[data["row"]][data["col"]] = "X";
+        } else {
+          room.gameState[data["row"]][data["col"]] = "O";
+        }
+        room.currentTurn += 1;
+        room.currentTurn %= room.memberTeamList.length;
       }
-      room.currentTurn += 1;
-      room.currentTurn %= room.memberTeamList.length;
       console.log("recieved game move");
-      socket.emit("gameState", {gameState: room.gameState});
+      io.of(namespace).emit("gameState", {
+        gameState: room.gameState,
+        memberTeamList: room.memberTeamList,
+      });
     })
 
-
+    // Removes disconnected people from teams, should we think about rejoining?
+    // What about disconnects, if we allow rejoins, we need to keep a db of rooms and teams
     socket.on('disconnect', function(){
       var found = false;
       for(i = 0; i < room.socketList; i++){
