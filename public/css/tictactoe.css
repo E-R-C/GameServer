@@ -11,6 +11,18 @@ td:after {
   display: block;
   margin-top: 100%;
 }
+td .leftBorder{
+  border-left: 2px;
+}
+td .rightBorder{
+  border-right: 2px;
+}
+td .bottomBorder{
+  border-bottom: 2px;
+}
+td .topBorder{
+  border-top: 2px;
+}
 td .content {
   position: absolute;
   top: 0;
@@ -23,5 +35,5 @@ td .content {
   text-align: center;
   color: white;
   line-height: 200px;
-}
 
+}

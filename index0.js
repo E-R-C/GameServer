@@ -30,6 +30,23 @@ app.use(session({
 // Socket setup
 var io = socket(server);
 
+var gameSettings = {
+  tictactoe: {
+    numTeams: 2,
+    teamOrder: [0, 1],
+    firstTurnTeam: 0,
+    initGameState: [
+      [' ', ' ', ' '],
+      [' ', ' ', ' '],
+      [' ', ' ', ' ']
+    ],
+  },
+  connect4: {
+    numTeams: 2,
+  }
+};
+
+
 // Index routing and room creation
 app.post('/', function(req, res){
   var cont = req.body;
@@ -37,12 +54,11 @@ app.post('/', function(req, res){
   var roomCode;
   if (host) {
     console.log("Hosting a game");
-    roomCode = createRoom(roomList, cont.game, cont.name, cont.maxPlayers)
+    roomCode = createRoom(roomList, cont.game, cont.name, cont.maxPlayers, gameSettings[cont.game].numTeams)
   } else { // Joining a game
     console.log("Joining a game");
     roomCode = cont.roomCode;
   }
-  console.log(getRoom(roomList, roomCode));
   if (canJoin(roomList, roomCode, cont.name)){
     console.log("Joining " + roomCode);
     req.session.roomCode = roomCode;
@@ -59,14 +75,13 @@ app.get('/:roomCode', function(req, res) {
   var roomCode = req.params.roomCode;
   var name = req.session.userName;
   var roomObj = getRoom(roomList, roomCode);
-  // TODO: serve back the html document here for a game
   if (roomObj){
     if (roomObj.gameType === "tictactoe"){
-      // TODO: serve back tictactoe
       res.render('tictactoe.ejs', {
         title: "Tic Tac Toe!",
         roomCode: roomObj.roomCode,
         gameType: "Tic-Tac-Toe",
+        name: name,
       });
 
     } else if (roomObj.gameType === "connect4"){
@@ -98,7 +113,7 @@ function generateRandomCode(len){
 }
 // must check for unique name and existing roomcode;
 // Creates a room then returns the unique Code for it
-function createRoom(roomList, gameType, hostname, maxPlayers){
+function createRoom(roomList, gameType, hostname, maxPlayers, numTeams){
   var safeRoomCode = false;
   var roomCode;
   // Keeps creating new room codes until we find one that works
@@ -110,7 +125,8 @@ function createRoom(roomList, gameType, hostname, maxPlayers){
     }
   }
   var nsp = io.of('/' + roomCode);
-  console.log('/' + roomCode);
+
+  /* ROOM DECLARATION IS HERE */
   var room = {
     roomCode:roomCode,
     players:[],
@@ -118,16 +134,63 @@ function createRoom(roomList, gameType, hostname, maxPlayers){
     host:hostname,
     maxPlayers:parseInt(maxPlayers),
     socketNamespace: nsp,
+    gameState: shalClone(gameSettings[gameType].initGameState),
+    turnOrder: shalClone(gameSettings[gameType].turnOrder),
+    currentTurn: 0,
+    socketList: genEmptyArray(gameSettings[gameType].numTeams),
+    memberTeamList: genEmptyArray(gameSettings[gameType].numTeams),
   };
+
+
   nsp.on('connection', function(socket){
     console.log('SOCKET: someone connected to room ' + roomCode);
-    
-    socket.on('disconnect', function(){});
+    // Prompt
+    socket.emit("gameState", {gameState: room.gameState});
+    socket.on("tttgameMove", function(data){
+      if (room.currentTurn % 2 === 0){
+        room.gameState[data["row"]][data["col"]] = "X";
+      } else {
+        room.gameState[data["row"]][data["col"]] = "O";
+      }
+      room.currentTurn += 1;
+      room.currentTurn %= room.memberTeamList.length;
+      console.log("recieved game move");
+      socket.emit("gameState", {gameState: room.gameState});
+    })
+
+
+    socket.on('disconnect', function(){
+      var found = false;
+      for(i = 0; i < room.socketList; i++){
+        var index = room.socketList[i].indexOf(socket);
+        if(index != -1){
+          room.socketList[i].splice(index,1);
+          console.log(room.memberTeamList[i][index] + " Disconnected");
+          room.memberTeamList[i].splice(index,1);
+          break;
+        }
+      }
+      if (! found){
+        console.log("a user who could not be found on any team just disconnected");
+      }
+    });
   });
   roomList.push(room);
   return roomCode;
 }
+function addUser(room, socket, name, teamIndex){
 
+}
+function shalClone(obj){
+  return Object.assign({}, obj);
+}
+function genEmptyArray(size){
+  arr = []
+  for(i = 0; i < size; i++){
+    arr.push([]);
+  }
+  return arr;
+}
 function validNewRoomCode(roomList, newCode){
   return !existingRoomCode(roomList, newCode);
 }
@@ -158,11 +221,4 @@ function canJoin(roomList, roomCode, name){
     return true;
   }
   return false;
-}
-function joinRoom(roomCode, name, res){
-  // we'll need to set a cookie here.
-  // cookie should contain: name
-  // res.send(path.join(__dirname, roomCode));
-  res.send("WOOOOOOOO");
-  console.log("trying to join");
 }

@@ -16,22 +16,29 @@
 </head>
 <body>
 <h1>Room: <span class="roomCode"><%= roomCode %></span>  Game: <span class="gameType"><%= gameType %></span></h1>
+<p>
+  You are: <strong id="name"><%= name %></strong>
+</p>
+<div id="teamSelectDiv">
+  <button id="Team0">Join Team 0</button>
+  <button id="Team1">Join Team 1</button>
+</div>
 <div id="gameDiv">
-  <table>
+  <table id="tttBoard">
   <tr>
-    <td ><div class="content">1</div></td>
-    <td><div class="content">1</div></td>
-    <td><div class="content">1</div></td>
+    <td ><div class="content"></div></td>
+    <td><div class="content"></div></td>
+    <td><div class="content"></div></td>
   </tr>
   <tr>
-    <td><div class="content">1</div></td>
-    <td><div class="content">1</div></td>
-    <td><div class="content">1</div></td>
+    <td><div class="content"></div></td>
+    <td><div class="content"></div></td>
+    <td><div class="content"></div></td>
   </tr>
   <tr>
-    <td><div class="content">1</div></td>
-    <td><div class="content">1</div></td>
-    <td><div class="content">1</div></td>
+    <td><div class="content"></div></td>
+    <td><div class="content"></div></td>
+    <td><div class="content"></div></td>
   </tr>
   <table>
 </div>
